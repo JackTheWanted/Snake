@@ -158,8 +158,11 @@ while not done:
     screen.fill(BLACK)
     draw_text(str(snake.score), font, screen, 10, 10, BLUE)
 
-    if snake.score >= 2:
-        snake.colour = RGB
+    if snake.score >= 5:
+        snake.colour = BLUE
+    if snake.score >= 10:
+        snake.colour = ORANGE
+    if snake
     # Check the list of collisions.
 
         #moving right
