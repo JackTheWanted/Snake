@@ -30,15 +30,15 @@ class Food():
         self.image.fill(WHITE)
         self.rect = pygame.Rect(x, y, width, height)
         self.colour = WHITE
-        self.rect.x = random.randint(10, 690)
-        self.rect.y = random.randint(10, 490)
+        self.rect.x = random.randint(30, 670)
+        self.rect.y = random.randint(30, 470)
 
     def draw(self):
         pygame.draw.rect(screen, self.colour, self.rect)
 
     def reset_pos(self):
-        self.rect.x = random.randrange(10, 690)
-        self.rect.y = random.randrange(10, 490)
+        self.rect.x = random.randrange(30, 670)
+        self.rect.y = random.randrange(30, 470)
 
 
 
@@ -52,43 +52,58 @@ class Snake():
         self.y_speed = 0
         self.score = 0
         self.multiplier = 1
+        self.body = []
+        self.body.append(self.rect)
 
     def draw(self):
-        for i in segment_list:
-            pygame.draw.rect(screen, self.colour, self.rect)
+        for segment in self.body:
+            pygame.draw.rect(screen, self.colour, segment)
 
     def move(self):
-        self.rect.move_ip(self.x_speed, self.y_speed)
+        done = False
+        if len(self.body) > 1:
+            temp = self.body.pop(len(self.body)-1)
+            print(temp)
+            self.body.insert(0, temp)
+            self.body[0] = self.body[1].move(self.x_speed, self.y_speed)
+        else:
+            self.body[0].move_ip(self.x_speed, self.y_speed)
         if self.rect.x > 680 or self.rect.x < 0:
-            lose()
+            done = lose()
             self.x_speed = 0
         elif self.rect.y > 480 or self.rect.y < 0:
-            lose()
+            done = lose()
             self.y_speed = 0
+        if pygame.Rect(self.body[0]).colliderect(food.rect):
+            self.score += 1
+            self.grow()
+            food.reset_pos()
+        return done
 
     def restart(self):
         self.score = 0
+        self.colour = GREEN
         self.multiplier = 1
         self.rect.x = 30
         self.rect.y = 30
 
     def grow(self):
-        if pygame.Rect(self.rect).colliderect(food.rect):
-            self.score += 1
-            self.multiplier += .5
-            food.reset_pos()
+        self.body.insert(0, pygame.Rect(self.body[0].x + 21, self.body[0].y + self.y_speed, self.body[0].width, self.body[0].height))
+
+
 
 
 
 def wait():
+    done = False
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
+                return True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: # pressing escape quits
-                    pygame.quit()
-                return
+                    return True
+                return False
 
 def draw_text(text, font, surface, x, y, clr):
     textobj = font.render(text, 1, clr)
@@ -100,25 +115,23 @@ def lose():
     draw_text('You lost!', font, screen, 270, 170, BLUE)
     draw_text('Press any key to start again.', font, screen, 150, 270, BLUE)
     pygame.display.update()
-    wait()
+    done = wait()
     food.reset_pos()
     snake.restart()
-
+    return done
 
 # Set the title of the window
 pygame.display.set_caption('Snake')
 
 
-segment_list = []
-
-
 food = Food(10, 10, 20, 20)
 snake = Snake(30, 30, 20, 20, food)
-segment_list.append(snake)
+
+
 draw_text('It\'s snake time!', font, screen, 250, 170, BLUE)
 draw_text('Press any key to start.', font, screen, 210, 270, BLUE)
 pygame.display.update()
-wait()
+done = wait()
 
 clock = pygame.time.Clock()
 # -------- Main Program Loop -----------
@@ -159,10 +172,18 @@ while not done:
     draw_text(str(snake.score), font, screen, 10, 10, BLUE)
 
     if snake.score >= 5:
+        snake.multiplier = 1.5
         snake.colour = BLUE
     if snake.score >= 10:
+        snake.multiplier = 2
         snake.colour = ORANGE
-    if snake
+    if snake.score >= 15:
+        snake.multiplier = 3
+        snake.colour = YELLOW
+    if snake.score >= 20:
+        snake.multiplier = 5
+        snake.colour = RED
+
     # Check the list of collisions.
 
         #moving right
@@ -174,9 +195,8 @@ while not done:
         #moving down
 
     # Draw all the spites
-    snake.move()
+    done = snake.move()
     snake.draw()
-    snake.grow()
     food.draw()
 
     # Go ahead and update the screen with what we've drawn.
