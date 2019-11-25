@@ -1,4 +1,5 @@
-import pygame, sys, time, random
+import pygame, random
+
 
 
 pygame.init()
@@ -56,41 +57,48 @@ class Snake():
         self.body.append(self.rect)
 
     def draw(self):
-        for segment in self.body:
-            pygame.draw.rect(screen, self.colour, segment)
+     for self.segment in self.body:
+        pygame.draw.rect(screen, self.colour, self.segment)
 
     def move(self):
         done = False
         if len(self.body) > 1:
-            temp = self.body.pop(len(self.body)-1)
-            print(temp)
-            self.body.insert(0, temp)
-            self.body[0] = self.body[1].move(self.x_speed, self.y_speed)
+            segment = self.body.pop(len(self.body) - 1)
+            self.body.insert(0, segment)
+            self.body[0] = self.body[1].move(self.body[1].width, self.body)
+
         else:
             self.body[0].move_ip(self.x_speed, self.y_speed)
-        if self.rect.x > 680 or self.rect.x < 0:
+
+        if self.body[0].x > 680 or self.body[0].x < 0:
             done = lose()
             self.x_speed = 0
-        elif self.rect.y > 480 or self.rect.y < 0:
+        elif self.body[0].y > 480 or self.body[0].y < 0:
             done = lose()
             self.y_speed = 0
+
         if pygame.Rect(self.body[0]).colliderect(food.rect):
             self.score += 1
             self.grow()
             food.reset_pos()
+
         return done
 
     def restart(self):
+        if len(self.body) > 1:
+            for self.segment in self.body:
+                self.body.pop(0)
         self.score = 0
         self.colour = GREEN
         self.multiplier = 1
-        self.rect.x = 30
-        self.rect.y = 30
+        self.body[0].x = 30
+        self.body[0].y = 30
+
 
     def grow(self):
-        self.body.insert(0, pygame.Rect(self.body[0].x + 21, self.body[0].y + self.y_speed, self.body[0].width, self.body[0].height))
-
-
+        if self.x_speed > 0:
+            self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
+        if self.x_
 
 
 
@@ -118,6 +126,8 @@ def lose():
     done = wait()
     food.reset_pos()
     snake.restart()
+    snake.draw()
+
     return done
 
 # Set the title of the window
@@ -153,35 +163,35 @@ while not done:
             done = True
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                snake.x_speed = -2*snake.multiplier
+                snake.x_speed = -30*snake.multiplier
                 snake.y_speed = 0
             elif event.key == pygame.K_RIGHT:
-                snake.x_speed = 2*snake.multiplier
+                snake.x_speed = 30*snake.multiplier
                 snake.y_speed = 0
             elif event.key == pygame.K_UP:
-                snake.y_speed = -2*snake.multiplier
+                snake.y_speed = -30*snake.multiplier
                 snake.x_speed = 0
             elif event.key == pygame.K_DOWN:
-                snake.y_speed = 2*snake.multiplier
+                snake.y_speed = 30*snake.multiplier
                 snake.x_speed = 0
             elif event.key == pygame.K_f:
                 snake.colour = RED
 
     # Clear the screen
     screen.fill(BLACK)
-    draw_text(str(snake.score), font, screen, 10, 10, BLUE)
+    draw_text(str(snake.score), font, screen, 10, 10, snake.colour)
 
     if snake.score >= 5:
-        snake.multiplier = 1.5
+        snake.multiplier = 1
         snake.colour = BLUE
     if snake.score >= 10:
-        snake.multiplier = 2
+        snake.multiplier = 1
         snake.colour = ORANGE
     if snake.score >= 15:
-        snake.multiplier = 3
+        snake.multiplier = 1
         snake.colour = YELLOW
     if snake.score >= 20:
-        snake.multiplier = 5
+        snake.multiplier = 1
         snake.colour = RED
 
     # Check the list of collisions.
@@ -195,8 +205,8 @@ while not done:
         #moving down
 
     # Draw all the spites
-    done = snake.move()
     snake.draw()
+    done = snake.move()
     food.draw()
 
     # Go ahead and update the screen with what we've drawn.
@@ -204,7 +214,7 @@ while not done:
     pygame.display.flip()
 
     # Limit to 60 frames per second
-    clock.tick(60)
+    clock.tick(10)
 
 
 pygame.quit()
