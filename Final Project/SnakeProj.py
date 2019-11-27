@@ -78,10 +78,11 @@ class Snake():
             self.body.insert(0, segment)
             self.body[0] = self.body[1].move(self.x_speed, self.y_speed)
 
-            # if pygame.Rect().colliderect(segment):
-            #     done = lose()
-            #     self.x_speed = 0
-            #     self.y_speed = 0
+
+            if self.body[0].collidelist(self.body[1:]) != -1:
+                done = lose()
+                self.x_speed = 0
+                self.y_speed = 0
 
         else:
             self.body[0].move_ip(self.x_speed, self.y_speed)
@@ -95,6 +96,7 @@ class Snake():
 
         if pygame.Rect(self.body[0]).colliderect(food.rect):
             self.score += 1
+
             self.grow()
             food.reset_pos()
 
@@ -111,14 +113,9 @@ class Snake():
 
 
     def grow(self):
-        if self.x_speed > 0:#right
-            self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
-        if self.x_speed < 0:#left
-            self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
-        if self.y_speed > 0:#up
-            self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
-        if self.y_speed < 0:#down
-            self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
+        self.draw()
+        self.body.insert(0, pygame.Rect(self.body[0].x, self.body[0].y, self.body[0].width, self.body[0].height))
+
 
 
 def wait():
@@ -185,8 +182,7 @@ while not done:
                 if snake.y_speed != -20:
                     snake.y_speed = 20
                     snake.x_speed = 0
-            elif event.key == pygame.K_f:
-                snake.is_RGB = True
+
     # Clear the screen
     screen.fill(BLACK)
     draw_text(str(snake.score), font, screen, 10, 10, snake.colour)
