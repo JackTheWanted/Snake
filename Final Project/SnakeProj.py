@@ -182,7 +182,8 @@ while not done:
                 if snake.y_speed != -20:
                     snake.y_speed = 20
                     snake.x_speed = 0
-
+            elif event.key == pygame.K_f:
+                snake.is_RGB = True
     # Clear the screen
     screen.fill(BLACK)
     draw_text(str(snake.score), font, screen, 10, 10, snake.colour)
