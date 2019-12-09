@@ -32,7 +32,8 @@ background_image = pygame.image.load('background.png').convert()
 
 done = False
 
-class Bullet():
+
+class Bullet:
     def __init__(self, screen, x, y, bullet_speed):
         self.image = pygame.Surface([8, 8])
         self.rect = pygame.Rect(x, y, 8, 8)
@@ -40,16 +41,22 @@ class Bullet():
         self.screen = screen
         self.player_bullet = pygame.image.load('ship_bullet.png').convert()
         self.player_bullet.set_colorkey(MAGENTA)
-    def move(self):
-        self.player_bullet.move(0, -3)
-    def draw(self):
-        screen.blit(self.player_bullet, (self.rect.x + self.rect.width/2, self.rect.y, -3))
 
-class Player():
+    def move(self):
+        self.rect.y = player.rect.y
+        if shooting:
+            self.rect.y -= 3
+
+    def draw(self):
+        if shooting:
+            screen.blit(self.player_bullet, (player.rect.x + player.rect.width/2 - 4, self.rect.y))
+
+
+class Player:
     def __init__(self, screen, x, y, width, height):
         self.image = pygame.Surface([width, height])
         self.rect = pygame.Rect(500, 700, width, height)
-        self.screeen = screen
+        self.screen = screen
         self.x_speed = 0
         self.y_speed = 0
         self.bullets = []
@@ -90,10 +97,14 @@ class Player():
         screen.blit(player_image, self.rect)
 
     def shoot(self):
-        self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2, self.rect.y, -3))
+        if shooting:
+            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2, self.rect.y, -3))
+
+
 
 bullet = Bullet(8, 8, 8, -3)
 player = Player(screen, 410, 700, 90, 103 )
+
 
 def wait():
     done = False
@@ -106,6 +117,7 @@ def wait():
                     return True
                 return False
 
+
 def draw_text(text, font, surface, x, y, clr):
     textobj = font.render(text, 1, clr)
     textrect = textobj.get_rect()
@@ -116,8 +128,8 @@ def draw_text(text, font, surface, x, y, clr):
 pygame.display.set_caption('Space_Shooter')
 
 
-
 clock = pygame.time.Clock()
+
 # -------- Main Program Loop -----------
 while not done:
     for event in pygame.event.get():
@@ -134,6 +146,7 @@ while not done:
                 player.y_speed = 3
             elif event.key == pygame.K_SPACE:
                 shooting = True
+
             elif event.key == pygame.K_f:
                 player.boost()
 
