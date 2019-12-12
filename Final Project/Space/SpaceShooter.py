@@ -43,19 +43,63 @@ class Bullet:
         self.player_bullet.set_colorkey(MAGENTA)
 
     def move(self):
-        self.rect.y = player.rect.y
-        if shooting:
-            self.rect.y -= 3
+        self.rect.y += self.bullet_speed
 
     def draw(self):
-        if shooting:
-            screen.blit(self.player_bullet, (player.rect.x + player.rect.width/2 - 4, self.rect.y))
+        screen.blit(self.player_bullet, (self.rect.x, self.rect.y))
 
+
+class Enemy:
+    def __init__(self, screen, x, y, width, height):
+        self.image = pygame.Surface([width, height])
+        self.rect = pygame.Rect(450, 50, width, height)
+        self.screen = screen
+        self.x_speed = 0
+        self.bullets = []
+        self.health = 20
+
+    def move(self):
+        self.rect.x += self.x_speed
+        if player.rect.x > self.rect.x:
+            self.x_speed = 2
+        elif player.rect.x < self.rect.x:
+            self.x_speed = -2
+        else:
+            self.x_speed = 0
+
+        if self.health == 0:
+            self.respawn()
+
+        for i in range(player.rect.x, player.rect.x + 100):
+            if self.rect.x + self.rect.width / 2 == i:
+                self.shoot()
+
+        #moving bullets and bullets colliding
+        for bullet in self.bullets:
+            bullet.move()
+            if bullet.rect.y > 800:
+                self.bullets.remove(bullet)
+            elif bullet.rect.colliderect(player.rect):
+                player.health -= 1
+                self.bullets.remove(bullet)
+            elif bullet.rect.collidelistall(player.bullets):
+                self.bullets.remove(bullet)
+
+    def draw(self):
+        screen.blit(enemy_image, self.rect)
+        for bullet in self.bullets:
+            bullet.draw()
+
+    def respawn(self):
+        self.rect.y = 500
+
+    def shoot(self):
+        self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 2))
 
 class Player:
     def __init__(self, screen, x, y, width, height):
         self.image = pygame.Surface([width, height])
-        self.rect = pygame.Rect(500, 700, width, height)
+        self.rect = pygame.Rect(450, 700, width, height)
         self.screen = screen
         self.x_speed = 0
         self.y_speed = 0
@@ -64,6 +108,7 @@ class Player:
         self.player_moving.set_colorkey(MAGENTA)
         self.player_stopped = pygame.image.load('ship_static.png').convert()
         self.player_stopped.set_colorkey(MAGENTA)
+        self.health = 50
 
     def move(self):
         if self.rect.x + self.x_speed < 0:
@@ -79,6 +124,26 @@ class Player:
             self.rect.y = 800 - self.rect.height
         else:
             self.rect.move_ip(self.x_speed, self.y_speed)
+
+        #move bullets
+        for bullet in self.bullets:
+            bullet.move()
+            if bullet.rect.y < 0:
+                self.bullets.remove(bullet)
+            elif bullet.rect.colliderect(enemy.rect):
+                enemy.health -= 1
+                self.bullets.remove(bullet)
+            elif bullet.rect.collidelistall(enemy.bullets):
+                self.bullets.remove(bullet)
+
+        #collision
+        if self.rect.colliderect(enemy.rect):
+            self.health -= 5
+
+
+        if self.health <= 0:
+           print('dead')
+
 
     def boost(self):
         if self.x_speed > 0:
@@ -96,14 +161,18 @@ class Player:
             player_image = self.player_moving
         screen.blit(player_image, self.rect)
 
-    def shoot(self):
-        if shooting:
-            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2, self.rect.y, -3))
+        #draw bullets
+        for bullet in self.bullets:
+            bullet.draw()
 
+    def shoot(self):
+        self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
+        self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
 
 bullet = Bullet(8, 8, 8, -3)
-player = Player(screen, 410, 700, 90, 103 )
+enemy = Enemy(screen, 500, 150, 90, 78)
+player = Player(screen, 410, 700, 90, 103)
 
 
 def wait():
@@ -145,8 +214,7 @@ while not done:
             elif event.key == pygame.K_DOWN:
                 player.y_speed = 3
             elif event.key == pygame.K_SPACE:
-                shooting = True
-
+                player.shoot()
             elif event.key == pygame.K_f:
                 player.boost()
 
@@ -160,12 +228,13 @@ while not done:
 
     screen.fill(BLACK)
     screen.blit(background_image, [0, 0])
-    screen.blit(enemy_image, [500, 50])
+
+    enemy.draw()
+    enemy.move()
+
+
     player.draw()
-    player.shoot()
     player.move()
-    bullet.draw()
-    bullet.move()
 
     pygame.display.flip()
 
