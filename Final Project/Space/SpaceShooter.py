@@ -1,5 +1,5 @@
 import pygame
-
+import random
 pygame.init()
 
 BLACK = (0, 0, 0)
@@ -22,11 +22,6 @@ control = True
 screen = pygame.display.set_mode([1000, 800])
 
 score = 0
-player_image = pygame.image.load('ship_static.png').convert()
-player_image.set_colorkey(MAGENTA)
-
-enemy_image = pygame.image.load('enemy1.png').convert()
-enemy_image.set_colorkey(MAGENTA)
 
 background_image = pygame.image.load('background.png').convert()
 
@@ -52,21 +47,22 @@ class Bullet:
 class Enemy:
     def __init__(self, screen, x, y, width, height):
         self.image = pygame.Surface([width, height])
-        self.rect = pygame.Rect(450, 50, width, height)
+        self.rect = pygame.Rect(450, 100, width, height)
         self.screen = screen
         self.x_speed = 0
         self.bullets = []
         self.health = 20
-        self.enemy_alive = pygame.image.load('enemy1.png').convert()
-        self.enemy_alive.set_colorkey(MAGENTA)
         self.timer = 0
+        self.dead = 0
+        self.cooldown = 30
+        self.speed_multiplier = 1
 
     def move(self):
         self.rect.x += self.x_speed
         if player.rect.x > self.rect.x:
-            self.x_speed = 2
+            self.x_speed = 2*self.speed_multiplier
         elif player.rect.x < self.rect.x:
-            self.x_speed = -2
+            self.x_speed = -2*self.speed_multiplier
         else:
             self.x_speed = 0
 
@@ -87,44 +83,126 @@ class Enemy:
                 self.bullets.remove(bullet)
 
     def draw(self):
-        if self.health >= 0:
+        if self.health > 0:
             enemy_image = pygame.image.load('enemy1.png').convert()
             enemy_image.set_colorkey(MAGENTA)
             screen.blit(enemy_image, self.rect)
 
         if self.health <= 0:
             self.timer += 1
-            if self.timer >= 30 and self.timer < 60:
+            self.x_speed = 0
+            if 0 <= self.timer <= 15:
                 enemy_image = pygame.image.load('explosion1.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
-            elif self.timer >= 60 and self.timer <= 90:
+            elif 15 <= self.timer <= 30:
                 enemy_image =  pygame.image.load('explosion2.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
-            elif self.timer == 90:
+            elif 30 <= self.timer  <= 45:
                 enemy_image = pygame.image.load('explosion3.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
-            elif self.timer == 120:
+            elif 45 <= self.timer <= 60:
                 enemy_image = pygame.image.load('explosion4.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
-            elif self.timer == 150:
+            elif 60 <= self.timer <= 75:
                 enemy_image = pygame.image.load('explosion5.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
+            elif self.timer > 200:
+                self.respawn()
 
         for bullet in self.bullets:
             bullet.draw()
 
-
-
     def respawn(self):
-        self.rect.y = 500
+        self.dead += 1
+        self.speed_multiplier += .2
+        self.health = 20 + self.dead*5
+        self.cooldown = 30 - self.dead *5
+        self.rect.x = random.randrange(100, 900)
+        enemy_image = pygame.image.load('enemy1.png').convert()
+        enemy_image.set_colorkey(MAGENTA)
+        screen.blit(enemy_image, self.rect)
 
     def shoot(self):
-        self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 2))
+        self.timer += 1
+        if self.timer > self.cooldown:
+            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 10 + self.speed_multiplier))
+            self.timer = 0
+
+class Shooter(Enemy):
+    def __init__(self, screen, x, y, width, height):
+        self.image = pygame.Surface([width, height])
+        self.rect = pygame.Rect(450, 30, width, height)
+        self.screen = screen
+        self.x_speed = 3
+        self.bullets = []
+        self.health = 10
+        self.timer = 0
+        self.dead = 0
+        self.cooldown = 0
+        self.speed_multiplier = 1
+
+    def move(self):
+        self.rect.x += self.x_speed
+        if self.rect.x >= 950 or self.rect.x <= 0:
+            self.x_speed = self.x_speed*-1
+
+    def draw(self):
+        if self.health > 0:
+            shooter_image = pygame.image.load('shooter.png').convert()
+            shooter_image.set_colorkey(MAGENTA)
+            screen.blit(shooter_image, self.rect)
+
+        #explosion
+        if self.health <= 0:
+            self.timer += 1
+            self.x_speed = 0
+            if 0 <= self.timer <= 15:
+                enemy_image = pygame.image.load('explosion1.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif 15 <= self.timer <= 30:
+                enemy_image =  pygame.image.load('explosion2.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif 30 <= self.timer  <= 45:
+                enemy_image = pygame.image.load('explosion3.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif 45 <= self.timer <= 60:
+                enemy_image = pygame.image.load('explosion4.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif 60 <= self.timer <= 75:
+                enemy_image = pygame.image.load('explosion5.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif self.timer > 200:
+                self.respawn()
+
+        for bullet in self.bullets:
+            bullet.draw()
+
+    def shoot(self):
+        self.timer += 1
+        self.cooldown = random.randrange(0, 10)
+        if self.timer > self.cooldown:
+            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
+            self.timer = 0
+
+    def respawn(self):
+        self.dead += 1
+        self.speed_multiplier += .2
+        self.health = 20 + self.dead*5
+        self.cooldown = 30 - self.dead *5
+        self.rect.x = random.randrange(100, 900)
+        enemy_image = pygame.image.load('shooter.png').convert()
+        enemy_image.set_colorkey(MAGENTA)
+        screen.blit(enemy_image, self.rect)
 
 class Player:
     def __init__(self, screen, x, y, width, height):
@@ -139,6 +217,7 @@ class Player:
         self.player_stopped = pygame.image.load('ship_static.png').convert()
         self.player_stopped.set_colorkey(MAGENTA)
         self.health = 100
+        self.timer = 0
 
     def move(self):
         if self.rect.x + self.x_speed < 0:
@@ -163,17 +242,11 @@ class Player:
             elif bullet.rect.colliderect(enemy.rect):
                 enemy.health -= 1
                 self.bullets.remove(bullet)
-            elif bullet.rect.collidelistall(enemy.bullets):
-                self.bullets.remove(bullet)
+
 
         #collision
         if self.rect.colliderect(enemy.rect):
             self.health -= 5
-
-
-        if self.health <= 0:
-           print('dead')
-
 
     def boost(self):
         if self.x_speed > 0:
@@ -186,17 +259,41 @@ class Player:
             self.rect.y += 30
 
     def draw(self):
-        player_image = self.player_stopped
-        if self.x_speed != 0 or self.y_speed != 0:
-            player_image = self.player_moving
-        screen.blit(player_image, self.rect)
-
-        pygame.draw.rect(screen, RED, (5, 5, 100, 20))
         if self.health > 0:
+            player_image = self.player_stopped
+            if self.x_speed != 0 or self.y_speed != 0:
+                player_image = self.player_moving
+            screen.blit(player_image, self.rect)
+
+            pygame.draw.rect(screen, RED, (5, 5, 100, 20))
             pygame.draw.rect(screen, GREEN, (5, 5, self.health, 20))
         #draw bullets
         for bullet in self.bullets:
             bullet.draw()
+
+        if self.health <= 0:
+            self.timer += 1
+            self.x_speed = 0
+            if self.timer >= 10 and self.timer < 20:
+                enemy_image = pygame.image.load('explosion1.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif self.timer >= 20 and self.timer <= 30:
+                enemy_image = pygame.image.load('explosion2.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif self.timer >= 30 and self.timer <= 40:
+                enemy_image = pygame.image.load('explosion3.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif self.timer >= 40 and self.timer <= 50:
+                enemy_image = pygame.image.load('explosion4.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
+            elif self.timer >= 50 and self.timer <= 60:
+                enemy_image = pygame.image.load('explosion5.png').convert()
+                enemy_image.set_colorkey(MAGENTA)
+                screen.blit(enemy_image, self.rect)
 
     def shoot(self):
         self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
@@ -205,6 +302,7 @@ class Player:
 
 bullet = Bullet(8, 8, 8, -3)
 enemy = Enemy(screen, 500, 150, 90, 78)
+shooter = Shooter(score, 450, 50, 90, 78)
 player = Player(screen, 410, 700, 90, 103)
 
 
@@ -265,6 +363,9 @@ while not done:
     enemy.draw()
     enemy.move()
 
+    shooter.draw()
+    shooter.move()
+    shooter.shoot()
 
     player.draw()
     player.move()

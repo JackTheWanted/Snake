@@ -65,21 +65,22 @@ my_list = [5, 100, 8, 5, 3, 3, 56, 5, 23]
 # print(len(a))
 # print(len(a + b))
 
-plain_text = input('Please input the text you want to encrypt:')
+# plain_text = input('Please input the text you want to encrypt:')
+#
+# encrypted_text = ""
+# for c in plain_text:
+#     x = ord(c)
+#     x = x + 1
+#     c2 = chr(x)
+#     encrypted_text = encrypted_text + c2
+# print('Encrypted text:', encrypted_text)
+#
+# plain_text = ''
+#
+# for c in encrypted_text:
+#     x = ord(c)
+#     x = x - 1
+#     c2 = chr(x)
+#     plain_text = plain_text + c2
+# print('Deencrypted tex:', plain_text)
 
-encrypted_text = ""
-for c in plain_text:
-    x = ord(c)
-    x = x + 1
-    c2 = chr(x)
-    encrypted_text = encrypted_text + c2
-print('Encrypted text:', encrypted_text)
-
-plain_text = ''
-
-for c in encrypted_text:
-    x = ord(c)
-    x = x - 1
-    c2 = chr(x)
-    plain_text = plain_text + c2
-print('Deencrypted tex:', plain_text)
