@@ -18,13 +18,15 @@ font = pygame.font.Font('freesansbold.ttf', 30)
 shooting = False
 x_speed = 0
 y_speed = 0
+level = 0
 control = True
 screen = pygame.display.set_mode([1000, 800])
 
 score = 0
 
 background_image = pygame.image.load('background.png').convert()
-
+title_screen = pygame.image.load('background.png').convert()
+title_screen.set_colorkey(MAGENTA)
 done = False
 
 
@@ -151,11 +153,22 @@ class Shooter(Enemy):
         if self.rect.x >= 950 or self.rect.x <= 0:
             self.x_speed = self.x_speed*-1
 
+        for bullet in self.bullets:
+            bullet.move()
+            if bullet.rect.y > 800:
+                self.bullets.remove(bullet)
+            elif bullet.rect.colliderect(player.rect):
+                player.health -= 1
+                self.bullets.remove(bullet)
+            elif bullet.rect.collidelistall(player.bullets):
+                self.bullets.remove(bullet)
+
     def draw(self):
-        if self.health > 0:
-            shooter_image = pygame.image.load('shooter.png').convert()
-            shooter_image.set_colorkey(MAGENTA)
-            screen.blit(shooter_image, self.rect)
+        if enemy.dead > 0:
+            if self.health > 0:
+                shooter_image = pygame.image.load('shooter.png').convert()
+                shooter_image.set_colorkey(MAGENTA)
+                screen.blit(shooter_image, self.rect)
 
         #explosion
         if self.health <= 0:
@@ -189,10 +202,11 @@ class Shooter(Enemy):
 
     def shoot(self):
         self.timer += 1
-        self.cooldown = random.randrange(0, 10)
-        if self.timer > self.cooldown:
-            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
-            self.timer = 0
+        self.cooldown = random.randrange(0, 2000)
+        if enemy.dead > 0:
+            if self.timer > self.cooldown:
+                self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
+                self.timer = 0
 
     def respawn(self):
         self.dead += 1
@@ -239,6 +253,10 @@ class Player:
             bullet.move()
             if bullet.rect.y < 0:
                 self.bullets.remove(bullet)
+            elif bullet.rect.colliderect(shooter.rect):
+                shooter.health -= 1
+                self.bullets.remove(bullet)
+
             elif bullet.rect.colliderect(enemy.rect):
                 enemy.health -= 1
                 self.bullets.remove(bullet)
@@ -324,6 +342,21 @@ def draw_text(text, font, surface, x, y, clr):
     textrect.topleft = (x, y)
     surface.blit(textobj, textrect)
 
+def wait():
+    done = False
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE: # pressing escape quits
+                    return True
+                return False
+
+screen.fill(BLACK)
+# screen.blit(title_screen)
+pygame.display.update()
+wait()
 
 pygame.display.set_caption('Space_Shooter')
 
