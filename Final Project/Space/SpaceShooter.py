@@ -198,7 +198,6 @@ class Shooter(Enemy):
     def draw(self):
         if enemy.dead > 0:
             if self.health > 0:
-                print(self.rect.y)
                 shooter_image = pygame.image.load('shooter.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
@@ -282,11 +281,14 @@ class Bomber(Enemy):
 
         if self.rect.colliderect(player.rect):
             if enemy.dead > 2 or shooter.dead > 1:
-                self.health = 0
-                player.health = 0
+                if self.invtimer > 50:
+                    self.health = 0
+                    player.health = 0
 
     def draw(self):
         if enemy.dead > 2 or shooter.dead > 1:
+            self.invtimer += 1
+            print(self.invtimer)
             if self.health > 0:
                 bomber_image = pygame.image.load('bomber.png').convert()
                 bomber_image.set_colorkey(MAGENTA)
@@ -316,10 +318,6 @@ class Bomber(Enemy):
                 shooter_image = pygame.image.load('explosion5a.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
-
-
-
-
 
 class Player:
     def __init__(self, screen, x, y, width, height):
