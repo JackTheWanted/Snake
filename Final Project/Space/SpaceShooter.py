@@ -24,8 +24,8 @@ screen = pygame.display.set_mode([1000, 800])
 score = 0
 
 
-level_one = pygame.image.load('level_two.png').convert()
-level_two = pygame.image.load('background.png').convert()
+background = pygame.image.load('background.png').convert()
+level_two = pygame.image.load('level_two.png').convert()
 title_screen = pygame.image.load('title_screen.png').convert()
 title_screen.set_colorkey(MAGENTA)
 done = False
@@ -130,6 +130,7 @@ class Enemy:
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
             elif self.timer > 200:
+                player.score += 1
                 self.respawn()
 
         for bullet in self.bullets:
@@ -154,11 +155,12 @@ class Enemy:
     def shoot(self):
         self.timer += 1
         if self.timer > self.cooldown:
-            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 3))
+            self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 10))
             self.timer = 0
 
+
 class Shooter(Enemy):
-    def __init__(self, screen, x, y, width, height):
+    def __init__(self, screen, width, height):
         self.image = pygame.Surface([width, height])
         self.rect = pygame.Rect(450, -30, width, height)
         self.screen = screen
@@ -227,6 +229,7 @@ class Shooter(Enemy):
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
             elif self.timer > 200:
+                player.score += 1
                 self.respawn()
 
         for bullet in self.bullets:
@@ -253,8 +256,9 @@ class Shooter(Enemy):
             shooter_image.set_colorkey(MAGENTA)
             screen.blit(shooter_image, self.rect)
 
+
 class Bomber(Enemy):
-    def __init__(self, screen, x, y, width, height):
+    def __init__(self, screen, width, height):
         self.image = pygame.Surface([width, height])
         self.rect = pygame.Rect(450, 500, width, height)
         self.screen = screen
@@ -288,7 +292,6 @@ class Bomber(Enemy):
     def draw(self):
         if enemy.dead > 2 or shooter.dead > 1:
             self.invtimer += 1
-            print(self.invtimer)
             if self.health > 0:
                 bomber_image = pygame.image.load('bomber.png').convert()
                 bomber_image.set_colorkey(MAGENTA)
@@ -319,6 +322,7 @@ class Bomber(Enemy):
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
 
+
 class Player:
     def __init__(self, screen, x, y, width, height):
         self.image = pygame.Surface([width, height])
@@ -327,12 +331,14 @@ class Player:
         self.x_speed = 0
         self.y_speed = 0
         self.bullets = []
+        self.level_list = [background]
         self.player_moving = pygame.image.load('ship_mobile.png').convert()
         self.player_moving.set_colorkey(MAGENTA)
         self.player_stopped = pygame.image.load('ship_static.png').convert()
         self.player_stopped.set_colorkey(MAGENTA)
         self.health = 100
         self.timer = 0
+        self.score = 0
 
     def move(self):
         if player.health > 0:
@@ -424,12 +430,23 @@ class Player:
             self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
+    def level(self):
+        if self.score == 3:
+            enemy.health = 0
+            shooter.health = 0
+            bomber.health = 0
+            self.level_list.append(level_two)
+            self.level_list.pop(0)
+        elif self.score == 6:
+            self.level_list.append(level_three)
+            self.level_list.pop(0)
+
 
 bullet = Bullet(8, 8, 8, -3)
 enemy = Enemy(screen, 500, 150, 90, 78)
-shooter = Shooter(score, 450, -30, 90, 78)
+shooter = Shooter(score, 90, 78)
 player = Player(screen, 410, 700, 90, 103)
-bomber = Bomber(screen, 450, 500, 25, 25)
+bomber = Bomber(screen, 25, 25)
 
 def wait():
     done = False
@@ -442,23 +459,6 @@ def wait():
                     return True
                 return False
 
-
-def draw_text(text, font, surface, x, y, clr):
-    textobj = font.render(text, 1, clr)
-    textrect = textobj.get_rect()
-    textrect.topleft = (x, y)
-    surface.blit(textobj, textrect)
-
-def wait():
-    done = False
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE: # pressing escape quits
-                    return True
-                return False
 
 screen.fill(BLACK)
 screen.blit(title_screen, (100, 0))
@@ -497,8 +497,9 @@ while not done:
             elif event.key == pygame.K_SPACE:
                 shooting = False
 
+
     screen.fill(BLACK)
-    screen.blit(level_one, [0, 0])
+    screen.blit(player.level_list[0], [0, 0])
 
     enemy.draw()
     enemy.move()
@@ -513,6 +514,7 @@ while not done:
 
     player.draw()
     player.move()
+    player.level()
 
     pygame.display.flip()
 
