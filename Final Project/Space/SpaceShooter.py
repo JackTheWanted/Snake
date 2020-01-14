@@ -18,6 +18,7 @@ font = pygame.font.Font('freesansbold.ttf', 30)
 x_speed = 0
 y_speed = 0
 level = 0
+
 control = True
 screen = pygame.display.set_mode([1000, 800])
 
@@ -130,7 +131,6 @@ class Enemy:
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
             elif self.timer > 200:
-                player.score += 1
                 self.respawn()
 
         for bullet in self.bullets:
@@ -229,7 +229,6 @@ class Shooter(Enemy):
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
             elif self.timer > 200:
-                player.score += 1
                 self.respawn()
 
         for bullet in self.bullets:
@@ -339,6 +338,7 @@ class Player:
         self.health = 100
         self.timer = 0
         self.score = 0
+        self.lvl_timer = 0
 
     def move(self):
         if player.health > 0:
@@ -365,17 +365,19 @@ class Player:
                 shooter.health -= 1
                 if shooter.health > 0:
                     self.bullets.remove(bullet)
+                elif shooter.health == 0:
+                    self.score += 1
 
             elif bullet.rect.colliderect(enemy.rect):
                 enemy.health -= 1
                 if enemy.health > 0:
                     self.bullets.remove(bullet)
-
+                elif enemy.health == 0:
+                    self.score +=  1
 
         #collision
         if self.rect.colliderect(enemy.rect):
             self.health -= 5
-
 
 
     def boost(self):
@@ -431,13 +433,10 @@ class Player:
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
     def level(self):
-        if self.score == 3:
-            enemy.health = 0
-            shooter.health = 0
-            bomber.health = 0
+        if self.score == 4:
             self.level_list.append(level_two)
             self.level_list.pop(0)
-        elif self.score == 6:
+        elif self.score == 8:
             self.level_list.append(level_three)
             self.level_list.pop(0)
 
@@ -504,6 +503,7 @@ while not done:
     enemy.draw()
     enemy.move()
 
+    print(player.score)
     shooter.draw()
     shooter.move()
     shooter.shoot()
