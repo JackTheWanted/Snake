@@ -1,5 +1,7 @@
+#Jack C
 import pygame
 import random
+import time
 pygame.init()
 
 BLACK = (0, 0, 0)
@@ -17,6 +19,7 @@ DARK_GREEN = (0, 100, 0)
 font = pygame.font.Font('freesansbold.ttf', 30)
 x_speed = 0
 y_speed = 0
+lvl_timer = 0
 level = 0
 
 control = True
@@ -30,6 +33,7 @@ level_two = pygame.image.load('level_two.png').convert()
 title_screen = pygame.image.load('title_screen.png').convert()
 title_screen.set_colorkey(MAGENTA)
 done = False
+level_list = [background, level_two]
 
 
 class Bullet:
@@ -237,13 +241,13 @@ class Shooter(Enemy):
     def shoot(self):
         self.shoot_timer += 1
         self.cooldown = random.randrange(0, 2000 - self.dead * 200)
-        if self.health >= 0 and enemy.dead > 0 and player.health > 0:
+        if self.health >= 0 and enemy.dead > 0 and player.health > 0 and player.score != 4:
             if self.shoot_timer > self.cooldown:
                 self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
                 self.shoot_timer = 0
 
     def respawn(self):
-        if player.health > 0:
+        if player.health > 0 and player.score != 4:
             self.timer = 0
             self.dead += 1
             self.speed_multiplier += .2
@@ -330,7 +334,6 @@ class Player:
         self.x_speed = 0
         self.y_speed = 0
         self.bullets = []
-        self.level_list = [background]
         self.player_moving = pygame.image.load('ship_mobile.png').convert()
         self.player_moving.set_colorkey(MAGENTA)
         self.player_stopped = pygame.image.load('ship_static.png').convert()
@@ -338,7 +341,7 @@ class Player:
         self.health = 100
         self.timer = 0
         self.score = 0
-        self.lvl_timer = 0
+
 
     def move(self):
         if player.health > 0:
@@ -432,13 +435,8 @@ class Player:
             self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
-    def level(self):
-        if self.score == 4:
-            self.level_list.append(level_two)
-            self.level_list.pop(0)
-        elif self.score == 8:
-            self.level_list.append(level_three)
-            self.level_list.pop(0)
+    # def level(self):
+    #
 
 
 bullet = Bullet(8, 8, 8, -3)
@@ -446,6 +444,42 @@ enemy = Enemy(screen, 500, 150, 90, 78)
 shooter = Shooter(score, 90, 78)
 player = Player(screen, 410, 700, 90, 103)
 bomber = Bomber(screen, 25, 25)
+
+
+def level_up(screen, player, enemy, shooter, level):
+    if player.score == 1 and level == 0:
+        done = False
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:  # pressing escape quits
+                        return True
+                    return False
+            screen.fill(BLACK)
+            screen.blit(level_list[level], [0, 0])
+            player.draw()
+            player.rect.x += player.x_speed
+            player.rect.y += player.y_speed
+            player.x_speed = 0
+            player.y_speed = -5
+            clock.tick(60)
+            if player.rect.y < -40:
+                done = True
+        player.rect.x = 450
+        player.rect.y = 700
+        enemy.respawn()
+        shooter.respawn()
+        return level + 1
+
+    return level
+
+
+    # elif player.score == 8:
+
+
 
 def wait():
     done = False
@@ -493,17 +527,14 @@ while not done:
                 player.x_speed = 0
             elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                 player.y_speed = 0
-            elif event.key == pygame.K_SPACE:
-                shooting = False
 
 
     screen.fill(BLACK)
-    screen.blit(player.level_list[0], [0, 0])
+    screen.blit(level_list[level], [0, 0])
 
     enemy.draw()
     enemy.move()
 
-    print(player.score)
     shooter.draw()
     shooter.move()
     shooter.shoot()
@@ -514,9 +545,12 @@ while not done:
 
     player.draw()
     player.move()
-    player.level()
+
+
 
     pygame.display.flip()
+
+    level = level_up(screen, player, enemy, shooter, level)
 
     clock.tick(60)
 
