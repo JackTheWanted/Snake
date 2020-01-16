@@ -403,8 +403,9 @@ class Player:
             pygame.draw.rect(screen, RED, (5, 5, 100, 20))
             pygame.draw.rect(screen, GREEN, (5, 5, self.health, 20))
         #draw bullets
-        for bullet in self.bullets:
-            bullet.draw()
+        if player.score != 4 or level != 0:
+            for bullet in self.bullets:
+                bullet.draw()
 
         if self.health <= 0:
             self.timer += 1
@@ -435,9 +436,6 @@ class Player:
             self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
-    # def level(self):
-    #
-
 
 bullet = Bullet(8, 8, 8, -3)
 enemy = Enemy(screen, 500, 150, 90, 78)
@@ -447,31 +445,31 @@ bomber = Bomber(screen, 25, 25)
 
 
 def level_up(screen, player, enemy, shooter, level):
-    if player.score == 1 and level == 0:
+    if player.score == 4 and level == 0 or player.score == 8 and level == 1:
+        print('t')
         done = False
         clock = pygame.time.Clock()
-        while True:
+        while not done:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return True
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:  # pressing escape quits
-                        return True
-                    return False
-            screen.fill(BLACK)
+                    done = True
+
             screen.blit(level_list[level], [0, 0])
             player.draw()
-            player.rect.x += player.x_speed
-            player.rect.y += player.y_speed
+
             player.x_speed = 0
-            player.y_speed = -5
+            player.rect.move_ip((0, player.y_speed))
+            player.y_speed = -10
             clock.tick(60)
-            if player.rect.y < -40:
+            if player.rect.y < -30:
                 done = True
-        player.rect.x = 450
-        player.rect.y = 700
-        enemy.respawn()
-        shooter.respawn()
+
+            pygame.display.update()
+
+        player.y_speed = 0
+        player.rect.y = 750
+        enemy.health = 0
+        shooter.health = 0
         return level + 1
 
     return level
@@ -520,7 +518,7 @@ while not done:
             elif event.key == pygame.K_SPACE:
                 player.shoot()
             elif event.key == pygame.K_f:
-                player.boost()
+                player.score = 4
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -546,11 +544,10 @@ while not done:
     player.draw()
     player.move()
 
-
+    level = level_up(screen, player, enemy, shooter, level)
 
     pygame.display.flip()
 
-    level = level_up(screen, player, enemy, shooter, level)
 
     clock.tick(60)
 
