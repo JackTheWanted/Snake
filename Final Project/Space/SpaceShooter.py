@@ -1,3 +1,4 @@
+
 #Jack C
 import pygame
 import random
@@ -28,13 +29,27 @@ screen = pygame.display.set_mode([1000, 800])
 score = 0
 
 
-background = pygame.image.load('background.png').convert()
+level_one = pygame.image.load('level_one.png').convert()
 level_two = pygame.image.load('level_two.png').convert()
+level_three = pygame.image.load('level_three.png').convert()
 title_screen = pygame.image.load('title_screen.png').convert()
 title_screen.set_colorkey(MAGENTA)
+shooter_one = pygame.image.load('shooter1.png').convert()
+shooter_one.set_colorkey(MAGENTA)
+shooter_two = pygame.image.load('shooter2.png').convert()
+shooter_two.set_colorkey(MAGENTA)
+shooter_three = pygame.image.load('shooter3.png').convert()
+shooter_three.set_colorkey(MAGENTA)
+enemy_one = pygame.image.load('enemy1.png').convert()
+enemy_one.set_colorkey(MAGENTA)
+enemy_two = pygame.image.load('enemy2.png').convert()
+enemy_two.set_colorkey(MAGENTA)
+enemy_three = pygame.image.load('enemy3.png').convert()
+enemy_three.set_colorkey(MAGENTA)
 done = False
-level_list = [background, level_two]
-
+level_list = [level_one, level_two, level_three]
+shooter_list = [shooter_one, shooter_two, shooter_three]
+enemy_list = [enemy_one, enemy_two, enemy_three]
 
 class Bullet:
     def __init__(self, screen, x, y, bullet_speed):
@@ -69,6 +84,7 @@ class Enemy:
         self.health = 20
         self.timer = 0
         self.dead = 0
+        self.bullet_timer = 0
         self.cooldown = 30
         self.speed_multiplier = 1
 
@@ -107,9 +123,7 @@ class Enemy:
 
     def draw(self):
         if self.health > 0:
-            enemy_image = pygame.image.load('enemy1.png').convert()
-            enemy_image.set_colorkey(MAGENTA)
-            screen.blit(enemy_image, self.rect)
+            screen.blit(enemy_list[level], self.rect)
 
         if self.health <= 0:
             self.timer += 1
@@ -118,7 +132,7 @@ class Enemy:
                 enemy_image = pygame.image.load('explosion1.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
-            elif 15 <= self.timer <= 30:
+            elif 13 <= self.timer <= 30:
                 enemy_image =  pygame.image.load('explosion2.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
@@ -142,6 +156,7 @@ class Enemy:
 
     def respawn(self):
         if player.health > 0:
+            self.timer = 0
             self.dead += 1
             self.speed_multiplier += .2
             self.health = 20
@@ -152,15 +167,13 @@ class Enemy:
                 self.speed_multiplier = 1.8
             self.rect.x = random.randrange(100, 900)
             self.rect.y = -50
-            enemy_image = pygame.image.load('enemy1.png').convert()
-            enemy_image.set_colorkey(MAGENTA)
-            screen.blit(enemy_image, self.rect)
+            screen.blit(enemy_list[level], self.rect)
 
     def shoot(self):
-        self.timer += 1
-        if self.timer > self.cooldown:
+        self.bullet_timer += 1
+        if self.bullet_timer > self.cooldown:
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 10))
-            self.timer = 0
+            self.bullet_timer = 0
 
 
 class Shooter(Enemy):
@@ -190,7 +203,6 @@ class Shooter(Enemy):
             elif self.rect.y >= 30:
                 self.y_speed = 0
 
-
         for bullet in self.bullets:
             bullet.move()
             if bullet.rect.y > 800:
@@ -204,9 +216,7 @@ class Shooter(Enemy):
     def draw(self):
         if enemy.dead > 0:
             if self.health > 0:
-                shooter_image = pygame.image.load('shooter.png').convert()
-                shooter_image.set_colorkey(MAGENTA)
-                screen.blit(shooter_image, self.rect)
+                screen.blit(shooter_list[level], self.rect)
 
         #explosion
         if self.health <= 0:
@@ -240,14 +250,14 @@ class Shooter(Enemy):
 
     def shoot(self):
         self.shoot_timer += 1
-        self.cooldown = random.randrange(0, 2000 - self.dead * 200)
-        if self.health >= 0 and enemy.dead > 0 and player.health > 0 and player.score != 4:
+        self.cooldown = random.randrange(0, 2000 - self.dead * 400)
+        if self.health >= 0 and enemy.dead > 0 and player.health > 0:
             if self.shoot_timer > self.cooldown:
                 self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
                 self.shoot_timer = 0
 
     def respawn(self):
-        if player.health > 0 and player.score != 4:
+        if player.health > 0:
             self.timer = 0
             self.dead += 1
             self.speed_multiplier += .2
@@ -255,9 +265,7 @@ class Shooter(Enemy):
             self.x_speed = 3
             self.rect.x = random.randrange(100, 900)
             self.rect.y = -30
-            shooter_image = pygame.image.load('shooter.png').convert()
-            shooter_image.set_colorkey(MAGENTA)
-            screen.blit(shooter_image, self.rect)
+            screen.blit(shooter_list[level], self.rect)
 
 
 class Bomber(Enemy):
@@ -375,8 +383,11 @@ class Player:
                 enemy.health -= 1
                 if enemy.health > 0:
                     self.bullets.remove(bullet)
-                elif enemy.health == 0:
-                    self.score +=  1
+
+        if enemy.health < 0 and enemy.timer == 100:
+            self.score += 1
+        elif shooter.health < 0 and shooter.timer == 100:
+            self.score += 1
 
         #collision
         if self.rect.colliderect(enemy.rect):
@@ -403,9 +414,9 @@ class Player:
             pygame.draw.rect(screen, RED, (5, 5, 100, 20))
             pygame.draw.rect(screen, GREEN, (5, 5, self.health, 20))
         #draw bullets
-        if player.score != 4 or level != 0:
             for bullet in self.bullets:
                 bullet.draw()
+
 
         if self.health <= 0:
             self.timer += 1
@@ -444,9 +455,8 @@ player = Player(screen, 410, 700, 90, 103)
 bomber = Bomber(screen, 25, 25)
 
 
-def level_up(screen, player, enemy, shooter, level):
-    if player.score == 4 and level == 0 or player.score == 8 and level == 1:
-        print('t')
+def level_up(screen, player, enemy, shooter, bomber, level):
+    if player.score == 5 and level == 0 or player.score == 10 and level == 1:
         done = False
         clock = pygame.time.Clock()
         while not done:
@@ -455,7 +465,13 @@ def level_up(screen, player, enemy, shooter, level):
                     done = True
 
             screen.blit(level_list[level], [0, 0])
-            player.draw()
+            player_image = player.player_stopped
+            if player.x_speed != 0 or player.y_speed != 0:
+                player_image = player.player_moving
+            screen.blit(player_image, player.rect)
+
+            pygame.draw.rect(screen, RED, (5, 5, 100, 20))
+            pygame.draw.rect(screen, GREEN, (5, 5, player.health, 20))
 
             player.x_speed = 0
             player.rect.move_ip((0, player.y_speed))
@@ -468,15 +484,13 @@ def level_up(screen, player, enemy, shooter, level):
 
         player.y_speed = 0
         player.rect.y = 750
+        player.health = 100
         enemy.health = 0
         shooter.health = 0
+        bomber.invtimer = 0
         return level + 1
 
     return level
-
-
-    # elif player.score == 8:
-
 
 
 def wait():
@@ -518,7 +532,7 @@ while not done:
             elif event.key == pygame.K_SPACE:
                 player.shoot()
             elif event.key == pygame.K_f:
-                player.score = 4
+                player.score = 10
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
@@ -527,7 +541,6 @@ while not done:
                 player.y_speed = 0
 
 
-    screen.fill(BLACK)
     screen.blit(level_list[level], [0, 0])
 
     enemy.draw()
@@ -544,7 +557,8 @@ while not done:
     player.draw()
     player.move()
 
-    level = level_up(screen, player, enemy, shooter, level)
+
+    level = level_up(screen, player, enemy, shooter, bomber, level)
 
     pygame.display.flip()
 
