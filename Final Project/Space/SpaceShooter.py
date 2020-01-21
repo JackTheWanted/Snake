@@ -28,7 +28,8 @@ screen = pygame.display.set_mode([1000, 800])
 
 score = 0
 
-
+shoot_sound = pygame.mixer.Sound('shoot_sound.ogg')
+explosion_sound = pygame.mixer.Sound('explosion_sound.wav')
 level_one = pygame.image.load('level_one.png').convert()
 level_two = pygame.image.load('level_two.png').convert()
 level_three = pygame.image.load('level_three.png').convert()
@@ -128,6 +129,7 @@ class Enemy:
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
+            explosion_sound.play()
             if 0 <= self.timer <= 15:
                 enemy_image = pygame.image.load('explosion1.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
@@ -172,6 +174,7 @@ class Enemy:
     def shoot(self):
         self.bullet_timer += 1
         if self.bullet_timer > self.cooldown:
+            shoot_sound.play()
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width/2 - 4, self.rect.y + 70, 10))
             self.bullet_timer = 0
 
@@ -222,6 +225,7 @@ class Shooter(Enemy):
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
+            explosion_sound.play()
             if 0 <= self.timer <= 15:
                 shooter_image = pygame.image.load('explosion1.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
@@ -253,6 +257,7 @@ class Shooter(Enemy):
         self.cooldown = random.randrange(0, 2000 - self.dead * 400)
         if self.health >= 0 and enemy.dead > 0 and player.health > 0:
             if self.shoot_timer > self.cooldown:
+                shoot_sound.play()
                 self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width / 2 - 4, self.rect.y + 70, 2))
                 self.shoot_timer = 0
 
@@ -312,6 +317,7 @@ class Bomber(Enemy):
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
+            explosion_sound.play()
             if 0 <= self.timer <= 15:
                 shooter_image = pygame.image.load('explosion1a.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
@@ -393,17 +399,6 @@ class Player:
         if self.rect.colliderect(enemy.rect):
             self.health -= 5
 
-
-    def boost(self):
-        if self.x_speed > 0:
-            self.rect.x += 100
-        elif self.x_speed < 0:
-            self.rect.x -= 100
-        elif self.y_speed < 0:
-            self.rect.y -= 100
-        elif self.y_speed > 0:
-            self.rect.y += 100
-
     def draw(self):
         if self.health > 0:
             player_image = self.player_stopped
@@ -421,29 +416,37 @@ class Player:
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
+            explosion_sound.play()
             if self.timer >= 10 and self.timer < 20:
-                enemy_image = pygame.image.load('explosion1.png').convert()
-                enemy_image.set_colorkey(MAGENTA)
-                screen.blit(enemy_image, self.rect)
+                player_image = pygame.image.load('explosion1.png').convert()
+                player_image.set_colorkey(MAGENTA)
+                screen.blit(player_image, self.rect)
             elif self.timer >= 20 and self.timer <= 30:
-                enemy_image = pygame.image.load('explosion2.png').convert()
-                enemy_image.set_colorkey(MAGENTA)
-                screen.blit(enemy_image, self.rect)
+                player_image = pygame.image.load('explosion2.png').convert()
+                player_image.set_colorkey(MAGENTA)
+                screen.blit(player_image, self.rect)
             elif self.timer >= 30 and self.timer <= 40:
-                enemy_image = pygame.image.load('explosion3.png').convert()
-                enemy_image.set_colorkey(MAGENTA)
-                screen.blit(enemy_image, self.rect)
+                player_image = pygame.image.load('explosion3.png').convert()
+                player_image.set_colorkey(MAGENTA)
+                screen.blit(player_image, self.rect)
             elif self.timer >= 40 and self.timer <= 50:
-                enemy_image = pygame.image.load('explosion4.png').convert()
-                enemy_image.set_colorkey(MAGENTA)
-                screen.blit(enemy_image, self.rect)
+                player_image = pygame.image.load('explosion4.png').convert()
+                player_image.set_colorkey(MAGENTA)
+                screen.blit(player_image, self.rect)
             elif self.timer >= 50 and self.timer <= 60:
-                enemy_image = pygame.image.load('explosion5.png').convert()
-                enemy_image.set_colorkey(MAGENTA)
-                screen.blit(enemy_image, self.rect)
+                player_image = pygame.image.load('explosion5.png').convert()
+                player_image.set_colorkey(MAGENTA)
+                screen.blit(player_image, self.rect)
+            elif self.timer >= 100:
+                screen.fill(BLACK)
+                end_image = pygame.image.load('end_screen.png').convert()
+                end_image.set_colorkey(MAGENTA)
+                screen.blit(end_image, (0, -50))
+
 
     def shoot(self):
         if self.health > 0:
+            shoot_sound.play()
             self.bullets.append(Bullet(self.screen, self.rect.x - 4, self.rect.y + 50, -10 ))
             self.bullets.append(Bullet(self.screen, self.rect.x + self.rect.width - 4, self.rect.y + 50, -10))
 
@@ -530,6 +533,7 @@ while not done:
             elif event.key == pygame.K_DOWN:
                 player.y_speed = 3
             elif event.key == pygame.K_SPACE:
+
                 player.shoot()
             elif event.key == pygame.K_f:
                 player.score = 10
