@@ -29,26 +29,37 @@ screen = pygame.display.set_mode([1000, 800])
 score = 0
 
 shoot_sound = pygame.mixer.Sound('shoot_sound.ogg')
-explosion_sound = pygame.mixer.Sound('explosion_sound.wav')
+player_explosion_sound = pygame.mixer.Sound('player_explosion.ogg')
+enemy_explosion_sound = pygame.mixer.Sound('enemy_explosion.ogg')
+
+
 level_one = pygame.image.load('level_one.png').convert()
 level_two = pygame.image.load('level_two.png').convert()
 level_three = pygame.image.load('level_three.png').convert()
+
 title_screen = pygame.image.load('title_screen.png').convert()
 title_screen.set_colorkey(MAGENTA)
+story = pygame.image.load('story.png')
+
 shooter_one = pygame.image.load('shooter1.png').convert()
 shooter_one.set_colorkey(MAGENTA)
 shooter_two = pygame.image.load('shooter2.png').convert()
 shooter_two.set_colorkey(MAGENTA)
 shooter_three = pygame.image.load('shooter3.png').convert()
 shooter_three.set_colorkey(MAGENTA)
+
 enemy_one = pygame.image.load('enemy1.png').convert()
 enemy_one.set_colorkey(MAGENTA)
 enemy_two = pygame.image.load('enemy2.png').convert()
 enemy_two.set_colorkey(MAGENTA)
 enemy_three = pygame.image.load('enemy3.png').convert()
 enemy_three.set_colorkey(MAGENTA)
+
 done = False
+
+
 level_list = [level_one, level_two, level_three]
+level_music_list = [('level1_music.wav'), ('level2_music.wav'), ('level3_music.wav')]
 shooter_list = [shooter_one, shooter_two, shooter_three]
 enemy_list = [enemy_one, enemy_two, enemy_three]
 
@@ -129,8 +140,8 @@ class Enemy:
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            explosion_sound.play()
             if 0 <= self.timer <= 15:
+                enemy_explosion_sound.play()
                 enemy_image = pygame.image.load('explosion1.png').convert()
                 enemy_image.set_colorkey(MAGENTA)
                 screen.blit(enemy_image, self.rect)
@@ -225,8 +236,8 @@ class Shooter(Enemy):
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            explosion_sound.play()
             if 0 <= self.timer <= 15:
+                enemy_explosion_sound.play()
                 shooter_image = pygame.image.load('explosion1.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
                 screen.blit(shooter_image, self.rect)
@@ -317,7 +328,7 @@ class Bomber(Enemy):
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            explosion_sound.play()
+            enemy_explosion_sound.play()
             if 0 <= self.timer <= 15:
                 shooter_image = pygame.image.load('explosion1a.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
@@ -416,8 +427,8 @@ class Player:
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            explosion_sound.play()
             if self.timer >= 10 and self.timer < 20:
+                player_explosion_sound.play()
                 player_image = pygame.image.load('explosion1.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
@@ -512,6 +523,11 @@ screen.fill(BLACK)
 screen.blit(title_screen, (100, 0))
 pygame.display.update()
 wait()
+screen.blit(story, (0, 0))
+pygame.display.update()
+wait()
+
+
 
 pygame.display.set_caption('Space_Shooter')
 
@@ -547,6 +563,8 @@ while not done:
 
     screen.blit(level_list[level], [0, 0])
 
+
+
     enemy.draw()
     enemy.move()
 
@@ -561,9 +579,11 @@ while not done:
     player.draw()
     player.move()
 
-
+    old_level = level
     level = level_up(screen, player, enemy, shooter, bomber, level)
-
+    if old_level != level:
+        pygame.mixer.music.load(level_music_list[level])
+        pygame.mixer.music.play(-1, 0)
     pygame.display.flip()
 
 
