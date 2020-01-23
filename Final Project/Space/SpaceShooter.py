@@ -1,37 +1,21 @@
-
-#Jack C
+# Jack C
 import pygame
 import random
-import time
+
 pygame.init()
 
 BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
 MAGENTA = (255, 0, 255)
-BROWN = (139, 69, 19)
-CYAN = (127, 255, 255)
-GRAY = (105, 105, 105)
-YELLOW = (255, 255, 153)
-ORANGE = (255, 165, 0)
-DARK_GREEN = (0, 100, 0)
-font = pygame.font.Font('freesansbold.ttf', 30)
-x_speed = 0
-y_speed = 0
-lvl_timer = 0
 level = 0
+done = False
 
-control = True
 screen = pygame.display.set_mode([1000, 800])
-
-score = 0
 
 shoot_sound = pygame.mixer.Sound('shoot_sound.ogg')
 player_explosion_sound = pygame.mixer.Sound('player_explosion.ogg')
 enemy_explosion_sound = pygame.mixer.Sound('enemy_explosion.ogg')
-
 
 level_one = pygame.image.load('level_one.png').convert()
 level_two = pygame.image.load('level_two.png').convert()
@@ -55,13 +39,11 @@ enemy_two.set_colorkey(MAGENTA)
 enemy_three = pygame.image.load('enemy3.png').convert()
 enemy_three.set_colorkey(MAGENTA)
 
-done = False
-
-
 level_list = [level_one, level_two, level_three]
-level_music_list = [('level1_music.wav'), ('level2_music.wav'), ('level3_music.wav')]
+level_music_list = ['level1_music.wav', 'level2_music.wav', 'level3_music.wav']
 shooter_list = [shooter_one, shooter_two, shooter_three]
 enemy_list = [enemy_one, enemy_two, enemy_three]
+
 
 class Bullet:
     def __init__(self, screen, x, y, bullet_speed):
@@ -73,7 +55,6 @@ class Bullet:
         self.player_bullet.set_colorkey(MAGENTA)
         self.enemy_bullet = pygame.image.load('enemy_bullet.png').convert()
         self.enemy_bullet.set_colorkey(MAGENTA)
-
 
     def move(self):
         self.rect.y += self.bullet_speed
@@ -111,18 +92,17 @@ class Enemy:
                     self.x_speed = -2*self.speed_multiplier
                 else:
                     self.x_speed = 0
-
+        # Enemy AI
         if self.rect.y < 100:
             self.y_speed = 5
         elif self.rect.y >= 100:
             self.y_speed = 0
-
             if self.health > 0 and player.health > 0:
                 for i in range(player.rect.x, player.rect.x + 100):
                     if self.rect.x + self.rect.width / 2 == i:
                         self.shoot()
 
-        #moving bullets and bullets colliding
+        # moving bullets and bullets colliding
         for bullet in self.bullets:
             bullet.move()
             if bullet.rect.y > 800:
@@ -137,6 +117,10 @@ class Enemy:
         if self.health > 0:
             screen.blit(enemy_list[level], self.rect)
 
+        for bullet in self.bullets:
+            bullet.draw2()
+
+        # death/explosion
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
@@ -164,9 +148,6 @@ class Enemy:
             elif self.timer > 200:
                 self.respawn()
 
-        for bullet in self.bullets:
-            bullet.draw2()
-
     def respawn(self):
         if player.health > 0:
             self.timer = 0
@@ -190,7 +171,7 @@ class Enemy:
             self.bullet_timer = 0
 
 
-class Shooter(Enemy):
+class Shooter:
     def __init__(self, screen, width, height):
         self.image = pygame.Surface([width, height])
         self.rect = pygame.Rect(450, -30, width, height)
@@ -217,6 +198,7 @@ class Shooter(Enemy):
             elif self.rect.y >= 30:
                 self.y_speed = 0
 
+        # moving bullets and bullet collision
         for bullet in self.bullets:
             bullet.move()
             if bullet.rect.y > 800:
@@ -232,7 +214,10 @@ class Shooter(Enemy):
             if self.health > 0:
                 screen.blit(shooter_list[level], self.rect)
 
-        #explosion
+        for bullet in self.bullets:
+            bullet.draw2()
+
+        # explosion/death
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
@@ -260,9 +245,6 @@ class Shooter(Enemy):
             elif self.timer > 200:
                 self.respawn()
 
-        for bullet in self.bullets:
-            bullet.draw2()
-
     def shoot(self):
         self.shoot_timer += 1
         self.cooldown = random.randrange(0, 2000 - self.dead * 400)
@@ -284,7 +266,7 @@ class Shooter(Enemy):
             screen.blit(shooter_list[level], self.rect)
 
 
-class Bomber(Enemy):
+class Bomber:
     def __init__(self, screen, width, height):
         self.image = pygame.Surface([width, height])
         self.rect = pygame.Rect(450, 500, width, height)
@@ -310,6 +292,7 @@ class Bomber(Enemy):
             elif self.rect.y <= 0:
                 self.y_speed = random.randrange(1, 10)
 
+        # collision
         if self.rect.colliderect(player.rect):
             if enemy.dead > 2 or shooter.dead > 1:
                 if self.invtimer > 50:
@@ -324,14 +307,14 @@ class Bomber(Enemy):
                 bomber_image.set_colorkey(MAGENTA)
                 screen.blit(bomber_image, self.rect)
 
-        #explosion
+        # explosion
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            enemy_explosion_sound.play()
             if 0 <= self.timer <= 15:
                 shooter_image = pygame.image.load('explosion1a.png').convert()
                 shooter_image.set_colorkey(MAGENTA)
+                enemy_explosion_sound.play()
                 screen.blit(shooter_image, self.rect)
             elif 15 <= self.timer <= 30:
                 shooter_image =  pygame.image.load('explosion2a.png').convert()
@@ -367,7 +350,6 @@ class Player:
         self.timer = 0
         self.score = 0
 
-
     def move(self):
         if player.health > 0:
             if self.rect.x + self.x_speed < 0:
@@ -384,7 +366,7 @@ class Player:
             else:
                 self.rect.move_ip(self.x_speed, self.y_speed)
 
-        #move bullets
+        # move bullets
         for bullet in self.bullets:
             bullet.move()
             if bullet.rect.y < 0:
@@ -396,19 +378,20 @@ class Player:
                 elif shooter.health == 0:
                     self.score += 1
 
+            # collision
+            if self.rect.colliderect(enemy.rect):
+                self.health -= 5
+
             elif bullet.rect.colliderect(enemy.rect):
                 enemy.health -= 1
                 if enemy.health > 0:
                     self.bullets.remove(bullet)
 
+        # score adding
         if enemy.health < 0 and enemy.timer == 100:
             self.score += 1
         elif shooter.health < 0 and shooter.timer == 100:
             self.score += 1
-
-        #collision
-        if self.rect.colliderect(enemy.rect):
-            self.health -= 5
 
     def draw(self):
         if self.health > 0:
@@ -416,44 +399,47 @@ class Player:
             if self.x_speed != 0 or self.y_speed != 0:
                 player_image = self.player_moving
             screen.blit(player_image, self.rect)
-
+            # healthbar
             pygame.draw.rect(screen, RED, (5, 5, 100, 20))
             pygame.draw.rect(screen, GREEN, (5, 5, self.health, 20))
-        #draw bullets
+            # draw bullets
             for bullet in self.bullets:
                 bullet.draw()
 
-
+        # explosion/player death
         if self.health <= 0:
             self.timer += 1
             self.x_speed = 0
-            if self.timer >= 10 and self.timer < 20:
+            if 10 <= self.timer <= 20:
                 player_explosion_sound.play()
                 player_image = pygame.image.load('explosion1.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
-            elif self.timer >= 20 and self.timer <= 30:
+            elif 20 <= self.timer <= 30:
                 player_image = pygame.image.load('explosion2.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
-            elif self.timer >= 30 and self.timer <= 40:
+            elif 30 <= self.timer <= 40:
                 player_image = pygame.image.load('explosion3.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
-            elif self.timer >= 40 and self.timer <= 50:
+            elif 40 <= self.timer <= 50:
                 player_image = pygame.image.load('explosion4.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
-            elif self.timer >= 50 and self.timer <= 60:
+            elif 50 <= self.timer <= 60:
                 player_image = pygame.image.load('explosion5.png').convert()
                 player_image.set_colorkey(MAGENTA)
                 screen.blit(player_image, self.rect)
-            elif self.timer >= 100:
+            elif self.timer > 100:
                 screen.fill(BLACK)
                 end_image = pygame.image.load('end_screen.png').convert()
                 end_image.set_colorkey(MAGENTA)
                 screen.blit(end_image, (0, -50))
-
+            elif self.timer == 100:
+                pygame.mixer_music.stop()
+                pygame.mixer_music.load('death_music.wav')
+                pygame.mixer_music.play(0, 0)
 
     def shoot(self):
         if self.health > 0:
@@ -464,7 +450,7 @@ class Player:
 
 bullet = Bullet(8, 8, 8, -3)
 enemy = Enemy(screen, 500, 150, 90, 78)
-shooter = Shooter(score, 90, 78)
+shooter = Shooter(90, 78, 90)
 player = Player(screen, 410, 700, 90, 103)
 bomber = Bomber(screen, 25, 25)
 
@@ -519,6 +505,7 @@ def wait():
                 return False
 
 
+pygame.display.set_caption('Space_Shotter')
 screen.fill(BLACK)
 screen.blit(title_screen, (100, 0))
 pygame.display.update()
@@ -526,11 +513,8 @@ wait()
 screen.blit(story, (0, 0))
 pygame.display.update()
 wait()
-
-
-
-pygame.display.set_caption('Space_Shooter')
-
+pygame.mixer.music.load(level_music_list[0])
+pygame.mixer.music.play(-1, 0)
 
 clock = pygame.time.Clock()
 
@@ -560,10 +544,7 @@ while not done:
             elif event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                 player.y_speed = 0
 
-
     screen.blit(level_list[level], [0, 0])
-
-
 
     enemy.draw()
     enemy.move()
@@ -572,20 +553,19 @@ while not done:
     shooter.move()
     shooter.shoot()
 
-    if enemy.dead > 0:
-        bomber.draw()
-        bomber.move()
+    bomber.draw()
+    bomber.move()
 
     player.draw()
     player.move()
 
     old_level = level
     level = level_up(screen, player, enemy, shooter, bomber, level)
-    if old_level != level:
+
+    if old_level != level and player.health > 0:
         pygame.mixer.music.load(level_music_list[level])
         pygame.mixer.music.play(-1, 0)
     pygame.display.flip()
-
 
     clock.tick(60)
 
